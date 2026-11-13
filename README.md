@@ -43,7 +43,7 @@ release-assets/                              ZIP、校验和、验证报告（�
 ```
 ||
 |-|
-|<img width="1037" height="4096" alt="site" src="https://github.com/ooohjh/Cowart-Hermes/blob/main/tests/01.png" />|
+|<img width="1920" height="4096" alt="site" src="https://github.com/ooohjh/Cowart-Hermes/blob/main/tests/01.png" />|
 
 
 # Cowart-Hermes Windows 中文安装与维护指南 1.0.15
