@@ -1,0 +1,4 @@
+node_modules/@esbuild/android-arm 0.27.7
+Source: https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.27.7.tgz
+
+No standalone license file in npm tarball. Declared license: MIT

@@ -1,0 +1,4 @@
+node_modules/@esbuild/linux-ia32 0.27.7
+Source: https://registry.npmjs.org/@esbuild/linux-ia32/-/linux-ia32-0.27.7.tgz
+
+No standalone license file in npm tarball. Declared license: MIT

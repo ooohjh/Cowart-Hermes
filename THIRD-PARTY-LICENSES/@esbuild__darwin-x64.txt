@@ -1,0 +1,4 @@
+node_modules/@esbuild/darwin-x64 0.27.7
+Source: https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.27.7.tgz
+
+No standalone license file in npm tarball. Declared license: MIT
