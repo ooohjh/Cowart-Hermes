@@ -1,0 +1,4 @@
+node_modules/react-remove-scroll-bar 2.3.8
+Source: https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz
+
+No standalone license file in npm tarball. Declared license: MIT
