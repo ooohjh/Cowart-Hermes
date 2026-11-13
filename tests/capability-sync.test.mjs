@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile,mkdtemp,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+const root=new URL('../',import.meta.url);
+test('controlled sync checks canonical hash and refuses drift',async()=>{
+ const dir=await mkdtemp(path.join(process.env.TMPDIR,'cap-sync-'));
+ const tools=path.join(dir,'tools');await (await import('node:fs/promises')).mkdir(tools);
+ await writeFile(path.join(tools,'image_generation_explicit.py'),'CAPABILITY_SCHEMA = 6\n');
+ const script=new URL('../sync-capabilities.mjs',import.meta.url).pathname.replace(/^\/(\w:)/,'$1');
+ const authority=path.join(dir,'model-capabilities.json');await writeFile(authority,await readFile(new URL('../model-capabilities.json',import.meta.url)));
+ const runArgs=[script,'--source',authority,'--target',dir];
+ let r=spawnSync(process.execPath,runArgs,{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+ const source=JSON.parse(await readFile(new URL('../model-capabilities.json',import.meta.url)));
+ const dest=JSON.parse(await readFile(path.join(tools,'image_generation_capabilities.json')));assert.deepEqual(dest,source);
+ r=spawnSync(process.execPath,[...runArgs,'--check'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+ dest.models[0].sizes.pop();await writeFile(path.join(tools,'image_generation_capabilities.json'),JSON.stringify(dest));
+ r=spawnSync(process.execPath,[...runArgs,'--check'],{encoding:'utf8'});assert.notEqual(r.status,0);
+});

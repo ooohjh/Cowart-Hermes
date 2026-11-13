@@ -1,0 +1,406 @@
+import {
+  RESOURCE_MIME_TYPE,
+  registerAppResource,
+} from "@modelcontextprotocol/ext-apps/server";
+import { MCP_APPS_GLOBAL_SCRIPT } from "../generated/mcp-apps-global-script.mjs";
+import { installCowartStartupDiagnostics } from "../../src/widgetStartup.js";
+
+export function inlineWidget({
+  html,
+  css = "",
+  js = "",
+  appVersion,
+  initialDisplayMode = "",
+  cssPlaceholder = "/* __COWART_WIDGET_CSS__ */",
+  jsPlaceholder = "/* __COWART_WIDGET_JS__ */",
+}) {
+  return injectMcpHostBridge(
+    html.replace(cssPlaceholder, () => css).replace(jsPlaceholder, () => js),
+    { appVersion, initialDisplayMode },
+  );
+}
+
+export function registerWidgetResource(
+  server,
+  {
+    name,
+    uri,
+    title,
+    description,
+    html,
+    prefersBorder = false,
+    connectDomains = [],
+    resourceDomains = [],
+    frameDomains = [],
+  },
+) {
+  const csp = {
+    connectDomains,
+    resourceDomains,
+  };
+  if (frameDomains.length > 0) csp.frameDomains = frameDomains;
+
+  const openAiCsp = {
+    connect_domains: connectDomains,
+    resource_domains: resourceDomains,
+  };
+  if (frameDomains.length > 0) openAiCsp.frame_domains = frameDomains;
+
+  const metadata = {
+    ui: {
+      prefersBorder,
+      csp,
+    },
+    "openai/widgetDescription": description,
+    "openai/widgetPrefersBorder": prefersBorder,
+    "openai/widgetCSP": openAiCsp,
+    "openai/ui": {
+      availableDisplayModes: ["fullscreen"],
+      preferredDisplayMode: "fullscreen",
+    },
+  };
+
+  registerAppResource(
+    server,
+    name,
+    uri,
+    {
+      title,
+      description,
+      _meta: metadata,
+    },
+    async () => {
+      const text = typeof html === "function" ? await html() : html;
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: RESOURCE_MIME_TYPE,
+            text,
+            _meta: metadata,
+          },
+        ],
+      };
+    },
+  );
+}
+
+function injectMcpHostBridge(html, { appVersion, initialDisplayMode = "" } = {}) {
+  const bridge = [
+    '<script id="cowartStartupDiagnostics">',
+    escapeInlineScript(`(${installCowartStartupDiagnostics.toString()})(${JSON.stringify(appVersion)});`),
+    "</script>",
+    '<script id="cowartInitialDisplayMode">',
+    `window.__COWART_INITIAL_DISPLAY_MODE__=${JSON.stringify(initialDisplayMode)};`,
+    "</script>",
+    '<script id="cowartMcpAppsBundle">',
+    escapeInlineScript(MCP_APPS_GLOBAL_SCRIPT),
+    "</script>",
+    '<script id="cowartMcpHostBridge">',
+    mcpHostBridgeScript(appVersion),
+    "</script>",
+  ].join("\n");
+
+  if (html.includes("</head>")) {
+    return html.replace("</head>", () => `${bridge}\n</head>`);
+  }
+  return `${bridge}\n${html}`;
+}
+
+function escapeInlineScript(source) {
+  return source.replaceAll("</script", "<\\/script").replaceAll("</SCRIPT", "<\\/SCRIPT");
+}
+
+function mcpHostBridgeScript(appVersion) {
+  if (typeof appVersion !== "string" || !appVersion.trim()) {
+    throw new Error("Cowart widget bridge requires the plugin version.");
+  }
+
+  return `(() => {
+  "use strict";
+
+  const reportStartup = globalThis.__COWART_REPORT_STARTUP__ || (() => {});
+  const apps = globalThis.__COWART_MCP_APPS__;
+  if (!apps || typeof apps.App !== "function") {
+    reportStartup("sdk_missing");
+    return;
+  }
+
+  let mcpApp = null;
+  let bridgeTimer;
+
+  function publishHostGlobals(globals) {
+    window.openai = Object.assign(window.openai || {}, globals);
+    window.dispatchEvent(new CustomEvent("openai:set_globals", {
+      detail: { globals: window.openai },
+    }));
+  }
+
+  function applyHostContext(context) {
+    if (!context) return;
+    try {
+      if (context.theme && typeof apps.applyDocumentTheme === "function") {
+        apps.applyDocumentTheme(context.theme);
+      }
+      if (context.styles?.variables && typeof apps.applyHostStyleVariables === "function") {
+        apps.applyHostStyleVariables(context.styles.variables);
+      }
+      if (context.styles?.css?.fonts && typeof apps.applyHostFonts === "function") {
+        apps.applyHostFonts(context.styles.css.fonts);
+      }
+    } catch (_error) {
+      // Host styling is a progressive enhancement.
+    }
+
+    publishHostGlobals({
+      hostContext: context,
+      displayMode: context.displayMode,
+      availableDisplayModes: context.availableDisplayModes,
+      widgetInstanceId: context.widgetInstanceId || context.widgetId,
+    });
+  }
+
+  function promptFromMessage(message) {
+    if (typeof message === "string") return message;
+    if (message?.prompt) return String(message.prompt);
+    if (typeof message?.content === "string") return message.content;
+    return "";
+  }
+
+  function contentFromMessage(message, prompt) {
+    if (message && Array.isArray(message.content)) return message.content;
+    return [{ type: "text", text: prompt }];
+  }
+
+  function withTimeout(promise, ms, label) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(label)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
+  function toBridgeError(error) {
+    if (error instanceof Error) return error;
+    return new Error(String(error || "Cowart host bridge is unavailable."));
+  }
+
+  function currentSize() {
+    const root = document.documentElement;
+    const body = document.body;
+    return {
+      width: Math.ceil(window.innerWidth || root.clientWidth || 0),
+      height: Math.ceil(Math.max(
+        root.scrollHeight || 0,
+        root.offsetHeight || 0,
+        body?.scrollHeight || 0,
+        body?.offsetHeight || 0,
+      )),
+    };
+  }
+
+  function sendCurrentSize() {
+    if (!mcpApp || typeof mcpApp.sendSizeChanged !== "function") return;
+    try {
+      mcpApp.sendSizeChanged(currentSize());
+    } catch (_error) {
+      // Hosts without size notifications can keep the default widget size.
+    }
+  }
+
+  async function waitForReady(app) {
+    if (app?.ready) {
+      await withTimeout(app.ready, 4000, "Cowart host bridge did not become ready.");
+    }
+    if (globalThis.__COWART_MCP_HOST_ERROR__) {
+      throw toBridgeError(globalThis.__COWART_MCP_HOST_ERROR__);
+    }
+  }
+
+  function globalWorkspaceContext(payload) {
+    if (!payload?.globalWorkspace || !payload.projectDir || !payload.canvasDir) return null;
+    return {
+      type: "text",
+      text: "This request belongs to the open Cowart Documents canvas. Pass these exact paths to Cowart tools: " +
+        JSON.stringify({ projectDir: payload.projectDir, canvasDir: payload.canvasDir }) +
+        ". Reuse this canvas; do not substitute the conversation working directory or open another widget.",
+      annotations: { audience: ["assistant"] },
+    };
+  }
+
+  function installCowartApi(app) {
+    const api = window.cowartMcp || {};
+    window.cowartMcp = api;
+
+    api.sendFollowUpMessage = async (message) => {
+      try {
+        const prompt = promptFromMessage(message);
+        if (!prompt) throw new Error("Missing follow-up prompt.");
+        if (!app || typeof app.sendMessage !== "function") throw new Error("Host bridge is unavailable.");
+        const content = [...contentFromMessage(message, prompt)];
+        // Capture the target at send time. Project-conversation messages retain
+        // their existing content and routing.
+        const workspaceContext = globalWorkspaceContext(window.openai?.toolOutput);
+        if (workspaceContext) content.push(workspaceContext);
+        await waitForReady(app);
+        const result = await withTimeout(app.sendMessage({
+          role: "user",
+          content,
+        }), 8000, "Host did not accept the follow-up message.");
+        if (result?.isError) throw new Error("Host rejected the follow-up message.");
+        return result || {};
+      } catch (error) {
+        throw toBridgeError(error);
+      }
+    };
+
+    api.callServerTool = async (request, options) => {
+      try {
+        if (!app || typeof app.callServerTool !== "function") throw new Error("Host tool bridge is unavailable.");
+        await waitForReady(app);
+        // Let the SDK own the deadline: it removes pending response handlers
+        // and notifies the host on timeout. Promise.race only abandoned the
+        // caller while the underlying tool request continued to retain data.
+        return await app.callServerTool(request, {
+          ...options,
+          timeout: options?.timeoutMs || options?.timeout || 30000,
+        });
+      } catch (error) {
+        throw toBridgeError(error);
+      }
+    };
+
+    api.getHostCapabilities = () => {
+      try {
+        return typeof app?.getHostCapabilities === "function" ? app.getHostCapabilities() : null;
+      } catch (_error) {
+        return null;
+      }
+    };
+
+    api.updateModelContext = async (payload, options) => {
+      try {
+        if (!app || typeof app.updateModelContext !== "function") return {};
+        await waitForReady(app);
+        return await app.updateModelContext(payload, options);
+      } catch (error) {
+        throw toBridgeError(error);
+      }
+    };
+
+    api.requestDisplayMode = async (modeOrRequest) => {
+      if (!app || typeof app.requestDisplayMode !== "function") return {};
+      const request = typeof modeOrRequest === "string" ? { mode: modeOrRequest } : (modeOrRequest || { mode: "inline" });
+      await waitForReady(app);
+      return app.requestDisplayMode(request);
+    };
+
+    api.notifyResize = sendCurrentSize;
+  }
+
+  function payloadFromToolResult(result) {
+    // Project conversations can deliver the entire MCP result as JSON text in
+    // a content block, while the sidebar delivers the native result directly.
+    for (let depth = 0; depth < 3; depth++) {
+      if (result?.structuredContent || result?._meta?.widgetData) break;
+      const content = result?.content;
+      if (!Array.isArray(content) || content.length !== 1 || content[0]?.type !== "text") break;
+      try {
+        const decoded = JSON.parse(content[0].text);
+        if (!decoded || typeof decoded !== "object" || Array.isArray(decoded)) break;
+        result = decoded;
+      } catch (_error) {
+        break;
+      }
+    }
+    const metadata = result && typeof result === "object" ? result._meta || {} : {};
+    const payload = metadata.widgetData || result?.structuredContent || result || {};
+    return { metadata, payload };
+  }
+
+  function handleToolInput(input) {
+    const args = input?.arguments;
+    if (!args?.projectDir && !args?.canvasDir) return;
+    // Retain the explicit project even if a large/old result is malformed.
+    // An empty sidebar launch must still wait for its resolved Documents path.
+    publishHostGlobals({ toolOutput: { ...args } });
+  }
+
+  function handleToolResult(result) {
+    const { metadata, payload } = payloadFromToolResult(result);
+    reportStartup("tool_result_received");
+    if (!payload.projectDir && !payload.canvasDir) {
+      if (!window.openai?.toolOutput?.projectDir && !window.openai?.toolOutput?.canvasDir) {
+        reportStartup("tool_result_missing_target");
+      }
+      return;
+    }
+    publishHostGlobals({
+      rawToolResult: result,
+      toolOutput: payload,
+      toolResponseMetadata: metadata,
+    });
+    const workspaceContext = globalWorkspaceContext(payload);
+    if (workspaceContext) {
+      window.cowartMcp.updateModelContext({ content: [workspaceContext] }).catch(() => {
+        console.warn("Cowart could not attach its workspace context to the conversation.");
+      });
+    }
+    sendCurrentSize();
+  }
+
+  window.addEventListener("message", (event) => {
+    if (event.data?.method === "ui/notifications/tool-result" && event.data.params) {
+      handleToolResult(event.data.params.result || event.data.params);
+    }
+  });
+
+  try {
+    mcpApp = new apps.App(
+      { name: "cowart", version: ${JSON.stringify(appVersion)} },
+      { availableDisplayModes: ["fullscreen"] },
+      { autoResize: true },
+    );
+    globalThis.__COWART_MCP_APP__ = mcpApp;
+    installCowartApi(mcpApp);
+
+    mcpApp.addEventListener("hostcontextchanged", applyHostContext);
+    mcpApp.addEventListener("toolinput", handleToolInput);
+    mcpApp.addEventListener("toolresult", handleToolResult);
+
+    reportStartup("bridge_connecting");
+    // Observe a stalled handshake without cancelling a host that becomes ready later.
+    bridgeTimer = setTimeout(() => reportStartup("bridge_timeout"), 5000);
+    mcpApp.ready = mcpApp.connect()
+      .then(() => {
+        clearTimeout(bridgeTimer);
+        reportStartup("bridge_ready");
+        installCowartApi(mcpApp);
+        publishHostGlobals({
+          hostCapabilities: mcpApp.getHostCapabilities && mcpApp.getHostCapabilities(),
+          hostInfo: mcpApp.getHostVersion && mcpApp.getHostVersion(),
+        });
+        const hostContext = mcpApp.getHostContext && mcpApp.getHostContext();
+        applyHostContext(hostContext);
+        const initialMode = window.__COWART_INITIAL_DISPLAY_MODE__;
+        if (initialMode === "fullscreen" && hostContext?.displayMode === "inline" &&
+            hostContext.availableDisplayModes?.includes("fullscreen") &&
+            typeof mcpApp.requestDisplayMode === "function") {
+          mcpApp.requestDisplayMode({ mode: "fullscreen" }).then((result) => {
+            if (result?.mode) applyHostContext({ ...mcpApp.getHostContext(), displayMode: result.mode });
+          }).catch(() => {});
+        }
+        sendCurrentSize();
+      })
+      .catch((error) => {
+        clearTimeout(bridgeTimer);
+        globalThis.__COWART_MCP_HOST_ERROR__ = error;
+        reportStartup("bridge_failed");
+      });
+  } catch (error) {
+    clearTimeout(bridgeTimer);
+    globalThis.__COWART_MCP_HOST_ERROR__ = error;
+    reportStartup("bridge_failed");
+  }
+})();`;
+}

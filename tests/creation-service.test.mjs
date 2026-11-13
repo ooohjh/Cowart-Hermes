@@ -1,0 +1,29 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{mkdtemp,readFile,writeFile}from'node:fs/promises';import path from'node:path';import{createCreationService,validateRequest}from'../creation-service.mjs';
+const models=[{alias:'test',model:'test-model',operation:'images.edit',status:'verified',evidence:'TEST FIXTURE ONLY',sizes:[{aspect:'1:1',resolution:'1K',width:1024,height:1024}]}];
+const req=()=>({alias:'test',model:'test-model',sessionId:'session:test',version:2,id:crypto.randomUUID(),prompt:'test',aspect:'1:1',resolution:'1K',dimensions:{width:1024,height:1024},references:[{label:'image1',shapeId:'shape:ref',dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jQ1kAAAAASUVORK5CYII='}],pageId:'page:test',anchor:{x:100,y:200}});
+test('claim is atomic and session/hash bound; callbacks reject wrong session',async()=>{
+ const dir=await mkdtemp(path.join(process.env.TMPDIR,'cowart-claim-'));
+ const service=await createCreationService({cfg:{canvasDir:dir},mcp:{},models});const r=req();const job=await service.submit(r);await service.markSubmitted(r.id,r.sessionId);
+ await assert.rejects(service.claim(r.id,{sessionId:'wrong',requestHash:job.requestHash}));
+ await assert.rejects(service.claim(r.id,{sessionId:r.sessionId,requestHash:'wrong'}));
+ const proof={sessionId:r.sessionId,requestHash:job.requestHash};
+ const claims=await Promise.all([service.claim(r.id,proof),service.claim(r.id,proof)]);
+ assert.equal(claims.filter(x=>x.claimed).length,1);
+ await assert.rejects(service.complete(r.id,{...proof,sessionId:'wrong'}));
+ await service.fail(r.id,{...proof,message:'fixture'});assert.equal(service.getJob(r.id).status,'failed');
+});
+test('validation rejects tampered dimensions, arbitrary URLs and unsupported size',()=>{assert.throws(()=>validateRequest({...req(),dimensions:{width:1,height:1}}));assert.throws(()=>validateRequest({...req(),references:[{label:'image1',dataUrl:'http://localhost/secret'}]}));assert.throws(()=>validateRequest({...req(),resolution:'2K',dimensions:{width:2048,height:2048}}));});
+for(const fail of [false,true])test(`stub Hermes callback ${fail?'failure preserves anchor':'success inserts and read-verifies anchor'}; no paid API`,async()=>{
+ const dir=await mkdtemp(path.join(process.env.TMPDIR||path.join(process.env.LOCALAPPDATA,'hermes','cache','scratch'),'cowart-test-'));let store={'shape:user':{id:'shape:user',type:'image',props:{w:10,h:10}}};
+ const fixture=path.join(dir,'mock-provider.png');await writeFile(fixture,Buffer.from(req().references[0].dataUrl.split(',')[1],'base64'));
+ const mcp={async request(_,r){let d;if(r.name==='insert_cowart_image'){assert.equal(r.arguments.replaceAiImageHolder,false);assert.match(path.basename(r.arguments.imagePath),/^Hermes cowart\d{4}-\d{2}-\d{2}\d{2,}\.png$/);assert.notEqual(r.arguments.imagePath,fixture);assert.deepEqual(await readFile(r.arguments.imagePath),await readFile(fixture));store['shape:generated']={id:'shape:generated',x:0,y:0,props:{w:512,h:512}};d={shapeId:'shape:generated'}}else if(r.name==='get_cowart_canvas_state')d={snapshot:{store:structuredClone(store)},revision:'r'};else{store=r.arguments.snapshot.store;d={ok:true}}return{structuredContent:d}}};
+ const service=await createCreationService({cfg:{canvasDir:dir},mcp,models});await service.anchor({pageId:'page:test',x:100,y:200});const r=req();await service.submit(r);r.anchor.x=999;assert.equal(service.getJob(r.id).anchor.x,100);await assert.rejects(service.markSubmitted(r.id,'other'));assert.equal(service.getJob(r.id).alias,'test');await service.markSubmitted(r.id,'session:test');if(fail)await service.complete(r.id,{sessionId:r.sessionId,requestHash:service.getJob(r.id).requestHash,imagePath:fixture,width:0,height:0});else await service.complete(r.id,{sessionId:r.sessionId,requestHash:service.getJob(r.id).requestHash,imagePath:fixture,width:1024,height:1024});assert.equal(service.getJob(r.id).status,fail?'failed':'completed');assert.deepEqual(service.getState().anchors['page:test'],fail?{x:100,y:200}:{x:632,y:456});if(!fail){const proof={sessionId:r.sessionId,requestHash:service.getJob(r.id).requestHash};await Promise.all([service.complete(r.id,{...proof,imagePath:fixture,width:1024,height:1024}),service.fail(r.id,{...proof,message:'late failure'})]);assert.equal(service.getJob(r.id).status,'completed')}assert.ok(store['shape:user']);assert.equal((await service.submit(r)).id,r.id);const disk=JSON.parse(await readFile(path.join(dir,'hermes-creation-state.json')));assert.equal(disk.jobs[r.id].status,fail?'failed':'completed');
+});
+test('failure callback is persisted with code/message/retryAfter and is idempotent; no insert',async()=>{
+ const dir=await mkdtemp(path.join(process.env.TMPDIR||path.join(process.env.LOCALAPPDATA,'hermes','cache','scratch'),'cowart-fail-'));let inserted=0;
+ const mcp={async request(_,r){if(r.name==='insert_cowart_image')inserted++;return{structuredContent:{snapshot:{store:{}},revision:'r'}}}};
+ const service=await createCreationService({cfg:{canvasDir:dir},mcp,models});const r=req();await service.submit(r);await service.markSubmitted(r.id,r.sessionId);
+ const first=await service.fail(r.id,{sessionId:r.sessionId,requestHash:service.getJob(r.id).requestHash,code:'provider_http_502',message:'fixture upstream bad gateway',retryAfter:60});const second=await service.fail(r.id,{sessionId:r.sessionId,requestHash:service.getJob(r.id).requestHash,code:'different',message:'must not overwrite'});
+ assert.equal(first.status,'failed');assert.deepEqual(first.error,{code:'provider_http_502',message:'fixture upstream bad gateway',retryAfter:60});assert.deepEqual(second.error,first.error);assert.equal(inserted,0);
+ const disk=JSON.parse(await readFile(path.join(dir,'hermes-creation-state.json')));assert.equal(disk.jobs[r.id].status,'failed');
+});

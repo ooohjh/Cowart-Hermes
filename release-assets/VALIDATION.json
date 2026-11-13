@@ -1,0 +1,13 @@
+{
+  "adapter": {
+    "tests": 30,
+    "pass": 30,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "realVendoredMcpStorage": "passed",
+  "paidRequests": 0,
+  "liveProfileModified": false,
+  "scope": "adapter unit tests plus isolated real vendored MCP input/output/asset-read; no GUI, installation or compatible core end-to-end acceptance"
+}

@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {validateRequest,createCreationService} from '../creation-service.mjs';
+import {mkdtemp,rm} from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+const req=()=>({version:2,id:crypto.randomUUID(),prompt:'offline edit',sessionId:'fixture',pageId:'page:fixture',anchor:{x:0,y:0},provider_alias:'ai-guo-image',model:'gpt-image-2.5-flare-2k',mode:'edit',aspect:'2:3',resolution:'2K',dimensions:{width:1360,height:2048},references:[{label:'image1',dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jQ1kAAAAASUVORK5CYII='}]});
+test('user edit unknown passes, autonomous and forged body flags denied',()=>{assert.equal(validateRequest(req(),undefined,true).operation,'images.edit');assert.throws(()=>validateRequest({...req(),userInitiated:true,approvalMode:'user_confirmed'}),/未验证/)});
+test('both sources reject malformed dimensions and references',()=>{for(const user of [true,false]){assert.throws(()=>validateRequest({...req(),dimensions:{width:-1,height:2048}},undefined,user));assert.throws(()=>validateRequest({...req(),references:[{label:'../outside',dataUrl:'file:///bad'}]},undefined,user))}});
+test('user approved job 502 callback remains failed and anchor unchanged',async()=>{const dir=await mkdtemp(path.join(os.tmpdir(),'cowart-source-'));try{const s=await createCreationService({cfg:{canvasDir:dir},mcp:{request(){throw Error('must not insert')}}});const j=await s.submit(req(),{userInitiated:true});assert.equal(s.getJob(j.id).approvalMode,'user_confirmed');await s.markSubmitted(j.id,'fixture');await s.fail(j.id,{sessionId:j.sessionId,requestHash:j.requestHash,code:'api_error',message:'HTTP 502'});assert.equal(s.getJob(j.id).status,'failed');assert.deepEqual(s.getState().anchors,{})}finally{await rm(dir,{recursive:true,force:true})}});

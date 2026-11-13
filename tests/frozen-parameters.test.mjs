@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,readFile} from 'node:fs/promises';
+import path from 'node:path';
+import {freezeSelection,MODELS} from '../creation-core.mjs';
+import {createCreationService} from '../creation-service.mjs';
+test('live selection contract freezes canonical parameters; service persists alias compatibility and order; no provider',async()=>{
+ const selection={model:'gpt-image-2.5-flare-2k',aspect:'1:1',resolution:'2K'};
+ const frozen=freezeSelection(selection);selection.model='gpt-image-2';
+ assert.equal(frozen.model,'gpt-image-2.5-flare-2k');assert.equal(frozen.size,'2048x2048');assert.ok(Object.isFrozen(frozen));
+ const canvasDir=await mkdtemp(path.join(process.env.TMPDIR,'cowart-contract-'));
+ const service=await createCreationService({cfg:{canvasDir},models:MODELS.map(m=>({...m,operation:'images.edit',operations:undefined,evidence:'TEST FIXTURE ONLY; NOT REAL EDIT EVIDENCE'})),mcp:{request(){throw Error('No canvas writes expected')}}});
+ const request={...frozen,id:crypto.randomUUID(),version:2,prompt:'fixture model names must not route',sessionId:'session:test',pageId:'page:test',anchor:{x:1,y:2},references:['b','a'].map((id,i)=>({label:`image${i+1}`,shapeId:id,dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jQ1kAAAAASUVORK5CYII='}))};
+ const job=await service.submit(request);assert.equal(job.provider_alias,'ai-guo-image');assert.deepEqual(job.referenceIds,['b','a']);
+ const disk=JSON.parse(await readFile(path.join(canvasDir,'hermes-creation-state.json')));assert.equal(disk.jobs[job.id].provider_alias,'ai-guo-image');
+ const legacy={...request,id:crypto.randomUUID()};delete legacy.provider_alias;assert.equal((await service.submit(legacy)).provider_alias,'ai-guo-image');
+ const count=service.getState().jobs.length;
+ for(const value of [undefined,null,'','undefined','null','wrong'])await assert.rejects(service.submit({...request,id:crypto.randomUUID(),provider_alias:value}));
+ for(const key of ['size','model','requestSize'])for(const value of [undefined,null,'','undefined'])await assert.rejects(service.submit({...request,id:crypto.randomUUID(),[key]:value}));
+ assert.equal(service.getState().jobs.length,count);
+});
