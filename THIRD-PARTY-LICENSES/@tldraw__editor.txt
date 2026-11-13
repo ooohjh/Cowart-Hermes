@@ -1,0 +1,5 @@
+node_modules/@tldraw/editor 5.1.1
+Source: https://registry.npmjs.org/@tldraw/editor/-/editor-5.1.1.tgz
+
+package/LICENSE.md
+This code is licensed under the [tldraw license](https://github.com/tldraw/tldraw/blob/main/LICENSE.md)

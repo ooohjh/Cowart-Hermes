@@ -1,0 +1,4 @@
+node_modules/@rollup/rollup-win32-x64-msvc 4.62.0
+Source: https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.62.0.tgz
+
+No standalone license file in npm tarball. Declared license: MIT

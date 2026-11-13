@@ -1,0 +1,5 @@
+node_modules/@tldraw/assets 5.2.2
+Source: https://registry.npmjs.org/@tldraw/assets/-/assets-5.2.2.tgz
+
+package/LICENSE.md
+This code is licensed under the [tldraw license](https://github.com/tldraw/tldraw/blob/main/LICENSE.md)
