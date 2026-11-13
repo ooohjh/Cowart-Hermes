@@ -1,0 +1,422 @@
+{
+  "version": 6,
+  "experiment": "Historical local observations; anonymized for distribution",
+  "models": [
+    {
+      "alias": "ai-guo-gpt-image-2",
+      "model": "gpt-image-2",
+      "baseURL": "https://api.iaiguo.com",
+      "status": "verified",
+      "evidence": "docs/CAPABILITIES.md#historical-evidence",
+      "sizes": [
+        {
+          "aspect": "2:3",
+          "resolution": "1K",
+          "width": 688,
+          "height": 1024,
+          "requestSize": "688x1024",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 688,
+          "requestSize": "1024x688",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:4",
+          "resolution": "1K",
+          "width": 768,
+          "height": 1024,
+          "requestSize": "768x1024",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "1:1",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 1024,
+          "requestSize": "1024x1024",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "2:3",
+          "resolution": "1.5K",
+          "width": 1024,
+          "height": 1536,
+          "requestSize": "1024x1536",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "1.5K",
+          "width": 1536,
+          "height": 1024,
+          "requestSize": "1536x1024",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "16:9",
+          "resolution": "2K",
+          "width": 2048,
+          "height": 1152,
+          "requestSize": "2048x1152",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "2:3",
+          "resolution": "2K",
+          "width": 1360,
+          "height": 2048,
+          "requestSize": "1360x2048",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:4",
+          "resolution": "2K",
+          "width": 1536,
+          "height": 2048,
+          "requestSize": "1536x2048",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "9:16",
+          "resolution": "2.5K",
+          "width": 1440,
+          "height": 2560,
+          "requestSize": "2160x3840",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "16:9",
+          "resolution": "2.5K",
+          "width": 2560,
+          "height": 1440,
+          "requestSize": "3840x2160",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "1:1",
+          "resolution": "2K",
+          "width": 2048,
+          "height": 2048,
+          "requestSize": "2048x2048",
+          "evidenceType": "measured"
+        }
+      ],
+      "operation": "images.generate",
+      "operations": {
+        "images.edit": {
+          "status": "unknown",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence",
+          "sizes": []
+        }
+      },
+      "documentedSizes": []
+    },
+    {
+      "alias": "ai-guo-image",
+      "model": "gpt-image-2.5-flare-2k",
+      "baseURL": "https://api.iaiguo.com",
+      "status": "verified",
+      "evidence": "docs/CAPABILITIES.md#historical-evidence",
+      "sizes": [
+        {
+          "aspect": "2:3",
+          "resolution": "1K",
+          "width": 688,
+          "height": 1024,
+          "requestSize": "688x1024",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 688,
+          "requestSize": "1024x688",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:4",
+          "resolution": "1K",
+          "width": 768,
+          "height": 1024,
+          "requestSize": "768x1024",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "4:3",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 768,
+          "requestSize": "1024x768",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "1:1",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 1024,
+          "requestSize": "1024x1024",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "2:3",
+          "resolution": "1.5K",
+          "width": 1024,
+          "height": 1536,
+          "requestSize": "1024x1536",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "1.5K",
+          "width": 1536,
+          "height": 1024,
+          "requestSize": "1536x1024",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "9:16",
+          "resolution": "2K",
+          "width": 1152,
+          "height": 2048,
+          "requestSize": "2160x3840",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "16:9",
+          "resolution": "2K",
+          "width": 2048,
+          "height": 1152,
+          "requestSize": "2048x1152",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "2:3",
+          "resolution": "2K",
+          "width": 1360,
+          "height": 2048,
+          "requestSize": "1360x2048",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "2K",
+          "width": 2048,
+          "height": 1360,
+          "requestSize": "2048x1360",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "1:1",
+          "resolution": "2K",
+          "width": 2048,
+          "height": 2048,
+          "requestSize": "2048x2048",
+          "evidenceType": "measured"
+        }
+      ],
+      "operation": "images.generate",
+      "operations": {
+        "images.edit": {
+          "status": "unknown",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence",
+          "sizes": []
+        }
+      },
+      "documentedSizes": []
+    },
+    {
+      "alias": "ai-guo-gpt-image-2-5-flare-4k",
+      "model": "gpt-image-2.5-flare-4k",
+      "baseURL": "https://api.iaiguo.com",
+      "status": "verified",
+      "evidence": "docs/CAPABILITIES.md#historical-evidence",
+      "sizes": [
+        {
+          "aspect": "9:16",
+          "resolution": "4K",
+          "width": 2304,
+          "height": 4096,
+          "requestSize": "2160x3840",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "16:9",
+          "resolution": "4K",
+          "width": 4096,
+          "height": 2304,
+          "requestSize": "3840x2160",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "2:3",
+          "resolution": "4K",
+          "width": 2688,
+          "height": 4032,
+          "requestSize": "1024x1536",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "4K",
+          "width": 4032,
+          "height": 2688,
+          "requestSize": "1536x1024",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "1:1",
+          "resolution": "4K",
+          "width": 4096,
+          "height": 4096,
+          "requestSize": "1024x1024",
+          "evidenceType": "measured"
+        }
+      ],
+      "operation": "images.generate",
+      "operations": {
+        "images.edit": {
+          "status": "unknown",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence",
+          "sizes": []
+        }
+      },
+      "documentedSizes": []
+    },
+    {
+      "alias": "ai-guo-gpt-image-2-6-flare",
+      "model": "gpt-image-2.6-flare",
+      "baseURL": "https://api.iaiguo.com",
+      "status": "verified",
+      "evidence": "docs/CAPABILITIES.md#historical-evidence",
+      "sizes": [
+        {
+          "aspect": "2:3",
+          "resolution": "1K",
+          "width": 688,
+          "height": 1024,
+          "requestSize": "688x1024",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 688,
+          "requestSize": "1024x688",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "3:4",
+          "resolution": "1K",
+          "width": 768,
+          "height": 1024,
+          "requestSize": "768x1024",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "4:3",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 768,
+          "requestSize": "1024x768",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "1:1",
+          "resolution": "1K",
+          "width": 1024,
+          "height": 1024,
+          "requestSize": "1024x1024",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "2:3",
+          "resolution": "1.5K",
+          "width": 1024,
+          "height": 1536,
+          "requestSize": "1024x1536",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "3:2",
+          "resolution": "1.5K",
+          "width": 1536,
+          "height": 1024,
+          "requestSize": "1536x1024",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "16:9",
+          "resolution": "2K",
+          "width": 2048,
+          "height": 1152,
+          "requestSize": "2048x1152",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "2:3",
+          "resolution": "2K",
+          "width": 1360,
+          "height": 2048,
+          "requestSize": "1360x2048",
+          "evidenceType": "measured",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence"
+        },
+        {
+          "aspect": "1:1",
+          "resolution": "2K",
+          "width": 2048,
+          "height": 2048,
+          "requestSize": "2048x2048",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "9:16",
+          "resolution": "4K",
+          "width": 2304,
+          "height": 4096,
+          "requestSize": "2160x3840",
+          "evidenceType": "measured"
+        },
+        {
+          "aspect": "16:9",
+          "resolution": "4K",
+          "width": 4096,
+          "height": 2304,
+          "requestSize": "3840x2160",
+          "evidenceType": "measured"
+        }
+      ],
+      "operation": "images.generate",
+      "operations": {
+        "images.edit": {
+          "status": "unknown",
+          "evidence": "docs/CAPABILITIES.md#historical-evidence",
+          "sizes": []
+        }
+      },
+      "documentedSizes": []
+    }
+  ]
+}

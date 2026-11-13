@@ -1,0 +1,10 @@
+{
+  "apiVersion": 1,
+  "creationApiVersion": 2,
+  "port": 43189,
+  "upstreamRoot": "./vendor/cowart",
+  "canvasDir": "./userdata/canvas",
+  "outputDir": "./userdata/generated",
+  "imageOutputDir": "./userdata/canvas/images",
+  "imageInputDir": "./userdata/canvas/images/input"
+}

@@ -1,0 +1,9 @@
+Licensing scope — not a blanket license grant
+
+Cowart upstream: Copyright (c) 2026 Twox, MIT License.
+The original full grant and conditions are preserved in vendor/cowart/LICENSE.
+That license applies to the upstream material, not automatically to this repository's independent adapter changes.
+
+Cowart-Hermes adapter and release-maintenance additions: authorship and redistribution licensing require owner confirmation. No new MIT grant is asserted here. Public distribution is blocked until the owner confirms the applicable license and rights.
+
+Third-party dependencies retain their original terms in THIRD-PARTY-LICENSES and embedded notices. In particular Cowart's MIT license does not grant tldraw production/commercial rights. No license key or warranty is provided. See THIRD-PARTY-NOTICES.md.
