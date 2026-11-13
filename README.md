@@ -42,7 +42,9 @@ docs/                                        架构、配置、发布与维护
 release-assets/                              ZIP、校验和、验证报告（不提交）
 ```
 
-[图片]
+——
+|https://github.com/ooohjh/Cowart-Hermes/blob/main/tests/01.png?raw=true|
+——
 
 # Cowart-Hermes Windows 中文安装与维护指南 1.0.15
 
