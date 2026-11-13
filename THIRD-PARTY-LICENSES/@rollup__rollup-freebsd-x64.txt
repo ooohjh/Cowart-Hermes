@@ -1,0 +1,4 @@
+node_modules/@rollup/rollup-freebsd-x64 4.62.0
+Source: https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.62.0.tgz
+
+No standalone license file in npm tarball. Declared license: MIT

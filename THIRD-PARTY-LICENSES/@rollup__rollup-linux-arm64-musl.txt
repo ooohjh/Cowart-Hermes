@@ -1,0 +1,4 @@
+node_modules/@rollup/rollup-linux-arm64-musl 4.62.0
+Source: https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.62.0.tgz
+
+No standalone license file in npm tarball. Declared license: MIT
