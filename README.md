@@ -41,8 +41,10 @@ build-portable.py / audit-portable.py         离线确定性构建与审计
 docs/                                        架构、配置、发布与维护
 release-assets/                              ZIP、校验和、验证报告（不提交）
 ```
+||
+|-|
+|<img width="1037" height="4096" alt="site" src="https://github.com/ooohjh/Cowart-Hermes/blob/main/tests/01.png" />|
 
-—| https://github.com/ooohjh/Cowart-Hermes/blob/main/tests/01.png |—
 
 # Cowart-Hermes Windows 中文安装与维护指南 1.0.15
 
